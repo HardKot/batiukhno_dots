@@ -9,4 +9,4 @@ require'neo-tree'.setup {
 
 local allias = require'core.allias'
 
-allias.nm('<c-b>', ':Neotree')
+allias.nm('<c-b>', ':Neotree<CR>')

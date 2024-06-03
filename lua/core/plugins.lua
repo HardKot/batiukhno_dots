@@ -52,9 +52,22 @@ require("lazy").setup({
 	{ 'hrsh7th/cmp-path' },
 	{ 'hrsh7th/cmp-cmdline' },
 	{ 'hrsh7th/nvim-cmp' },
+	{ 'hrsh7th/vim-vsnip' },
+	{ 'hrsh7th/vim-vsnip-integ' },
+
+	{ 'lewis6991/gitsigns.nvim' },
 	{
 		'nvim-telescope/telescope.nvim', 
 		tag = '0.1.6',
 		dependencies = { 'nvim-lua/plenary.nvim' }
+	},
+	{ 'simrat39/symbols-outline.nvim' },
+	{ 'b3nj5m1n/kommentary' },
+	{ 'akinsho/bufferline.nvim', version = "*", dependencies = 'nvim-tree/nvim-web-devicons' },
+	{ 'jose-elias-alvarez/null-ls.nvim' },
+	{ 
+		'nvimdev/dashboard-nvim',
+		event = 'VimEnter',
+		dependencies = { {'nvim-tree/nvim-web-devicons'}},
 	}
 })
