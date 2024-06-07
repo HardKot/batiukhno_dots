@@ -70,5 +70,6 @@ require("lazy").setup({
 		event = 'VimEnter',
 		dependencies = { {'nvim-tree/nvim-web-devicons'}},
 	},
-	{ 'akinsho/toggleterm.nvim', version = "*", config = true }
+	{ 'akinsho/toggleterm.nvim', version = "*", config = true },
+	{ 'HiPhish/rainbow-delimiters.nvim' },
 })
