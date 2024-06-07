@@ -57,7 +57,7 @@ require("lazy").setup({
 
 	{ 'lewis6991/gitsigns.nvim' },
 	{
-		'nvim-telescope/telescope.nvim', 
+		'nvim-telescope/telescope.nvim',
 		tag = '0.1.6',
 		dependencies = { 'nvim-lua/plenary.nvim' }
 	},
@@ -65,7 +65,7 @@ require("lazy").setup({
 	{ 'b3nj5m1n/kommentary' },
 	{ 'akinsho/bufferline.nvim', version = "*", dependencies = 'nvim-tree/nvim-web-devicons' },
 	{ 'jose-elias-alvarez/null-ls.nvim' },
-	{ 
+	{
 		'nvimdev/dashboard-nvim',
 		event = 'VimEnter',
 		dependencies = { {'nvim-tree/nvim-web-devicons'}},
