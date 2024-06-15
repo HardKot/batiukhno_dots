@@ -1,2 +1,2 @@
 vim.cmd"colorscheme nord"
-vim.opt.termguicolors = false
+vim.opt.termguicolors = true
