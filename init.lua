@@ -1,5 +1,5 @@
 require('core.plugins')
-require('core.allias')
+require('core.alias')
 require('core.colors')
 require('core.config')
 require('core.mapping')
@@ -19,4 +19,3 @@ require('plugins.kommentary')
 require('plugins.bufferline')
 require('plugins.nullls')
 require('plugins.dashboard')
-

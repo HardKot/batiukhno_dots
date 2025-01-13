@@ -21,8 +21,7 @@ require'neo-tree'.setup {
 	}
 }
 
-local allias = require'core.allias'
-
-allias.nm('<c-b>', ':Neotree<CR>')
+local alias = require'core.alias'
+alias.nm('<c-b>', ':Neotree<CR>')
 
 vim.cmd(':Neotree')
