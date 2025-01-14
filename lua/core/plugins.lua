@@ -16,8 +16,6 @@ vim.opt.rtp:prepend(lazypath)
 
 local plugins = {}
 
-if vim.g.vscode then
-else 
 	table.insert(plugins, {
 		"nvim-treesitter/nvim-treesitter",
 		build = function () 
@@ -78,6 +76,5 @@ else
 	})
 	table.insert(plugins, { 'akinsho/toggleterm.nvim', version = "*", config = true })
 	table.insert(plugins, { 'HiPhish/rainbow-delimiters.nvim' })
-end
 
 require("lazy").setup(plugins)
