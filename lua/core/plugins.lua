@@ -77,4 +77,6 @@ local plugins = {}
 	table.insert(plugins, { 'akinsho/toggleterm.nvim', version = "*", config = true })
 	table.insert(plugins, { 'HiPhish/rainbow-delimiters.nvim' })
 
+  table.insert(plugins, 'mfussenegger/nvim-dap')
+  table.insert(plugins, 'mfussenegger/nvim-jdtls')
 require("lazy").setup(plugins)
