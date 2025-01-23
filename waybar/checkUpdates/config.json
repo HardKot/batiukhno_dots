@@ -1,0 +1,15 @@
+{
+  "custom/updates": {
+    "exec": "~/.config/waybar/checkUpdates/checkupdates.sh",
+    "on-click": "~/.config/waybar/checkUpdates/checkupdates.sh",
+    "interval": 900, 
+    "return-type": "json",
+    "format": " {icon} ",
+    "format-icons": {
+        "has-updates": "",
+        "updated": ""
+    },
+    "tooltip": true,
+    "tooltip-format": "{}"
+  }
+}

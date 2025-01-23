@@ -1,0 +1,76 @@
+* {
+    /* `otf-font-awesome` is required to be installed for icons */
+    font-family: "NotoSans Nerd Font";
+    font-size: 18px;
+}
+
+window#waybar {
+    background: alpha(#2E3440, 0.85);
+    border-radius: 8px;
+    padding: 8px 16px;
+    color: #ECEFF4;
+}
+
+window#waybar.solo {
+  
+}
+
+#clock,
+#battery,
+#cpu,
+#memory,
+#disk,
+#temperature,
+#backlight,
+#network,
+#pulseaudio,
+#wireplumber,
+#custom-media,
+#tray,
+#mode,
+#idle_inhibitor,
+#scratchpad,
+#power-profiles-daemon,
+#mpd {
+    color: #ECEFF4;
+}
+
+#custom-appmenu {
+  color: #35BF5C;
+  margin-left: 10px;
+  font-size: 20px;
+}
+
+#workspaces {
+  border-radius: 8px;
+  padding: 0px 6px;
+}
+
+#workspaces button {
+  background: transparent;
+  color: #D8DEE9;
+  font-size: 4px;
+  margin: 0px -4px;
+  transition: all .2s ease;
+}
+
+#workspaces button.active {
+  color: #A3BE8C;
+  font-size: 8px;
+}
+
+#custom-exit {
+  color: #BF616A;
+  border-radius: 8px;
+  padding: 4px 10px;
+}
+
+#clock {
+}
+
+#tray {
+}
+
+#window {
+}
+

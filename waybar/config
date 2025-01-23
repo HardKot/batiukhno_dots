@@ -1,0 +1,33 @@
+{
+    "margin-top": 8,
+    "margin-left": 16,
+    "margin-right": 16,
+    
+    "spacing": 6,
+    "reload_style_on_change": true,
+
+    // Load Modules
+    "include": [
+        "~/.config/ml4w/settings/waybar-quicklinks.json",
+        "~/.config/waybar/modules.json",
+        "~/.config/waybar/ddcutil/config.json",
+        "~/.config/waybar/checkUpdates/config.json"
+    ],    
+    "modules-left": [
+        "custom/appmenu",
+        "hyprland/workspaces",
+        "hyprland/window"
+    ],
+    "modules-center": [
+    ],
+    "modules-right": [
+        "hyprland/language",
+        "tray",
+        "pulseaudio", 
+        "custom/ddcutil",
+        "network", 
+        "custom/updates",
+        "clock", 
+        "custom/exit"
+    ]
+}

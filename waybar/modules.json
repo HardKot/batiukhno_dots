@@ -1,0 +1,80 @@
+{
+    // Workspaces
+    "hyprland/workspaces" : {
+        "format": "{icon}",
+        "on-click": "activate",
+        "active-only": false,
+        "all-outputs": true,
+        "format-icons": {
+  			"urgent": "",
+  			"active": "",
+  			"default": ""
+        },
+        "persistent-workspaces": {
+             "*": 5
+        }       
+    },
+
+    "hyprland/window": {
+        "format": "{title}",
+        "max-length": 50,
+        "rewrite": {
+            "(.*) — Mozilla Firefox": "󰈹 <b>$1</b>",
+            "nvim (.*)": " <b>$1</b>",
+            "(.*) - zsh": " <b>$1</b>",
+            "(.*)": "<b>$1</b>"
+        },
+        "separate-outputs": false
+    },
+
+    // Rofi Application Launcher
+    "custom/appmenu": {
+        "format": "",
+        "tooltip-format": "Left: Open the application launcher\nRight: Show all keybindings",
+        "on-click": "rofi -show drun -replace",
+        "on-click-right": "~/.config/ml4w/scripts/keybindings.sh",
+        "tooltip": false
+    },
+    
+    // Power Menu
+    "custom/exit": {
+        "format": "",
+        "tooltip-format": "Powermenu",
+        "on-click": "wlogout -b 4",
+        "tooltip": false
+    },
+    "network": {
+      "format": "",
+      "format-disconnected": "󱐅",
+      "tooltip": true,
+      "tooltip-format": "<b>IP:</b> {ipaddr}\n<b>Down:</b> {bandwidthDownBytes}\n<b>Up:</b> {bandwidthUpBytes}"
+    },
+    "tray": {
+        "icon-size": 18,
+        "spacing": 10
+    },
+
+    // Clock
+    "clock": {
+        "format": "<b>󰥔 {:%R   %d %B}</b>",
+        "tooltip-format": "<tt><small>{calendar}</small></tt>",
+        "calendar": {
+          "mode": "month",
+          "weeks-pos": "",
+          "on-scroll": 1,
+          "format" : {
+            
+          }
+        }
+    },
+    "pulseaudio": {
+        "scroll-step": 5,
+        "format": " {icon} ",
+        "tooltip": true,
+        "tooltip-format": "{volume}% {desc}",
+        "format-icons": {
+            "default": ["", "", ""]
+        },
+        "on-click": "pavucontrol"
+    }
+}
