@@ -1,0 +1,33 @@
+{
+    "margin-top": 8,
+    "margin-left": 16,
+    "margin-right": 16,
+    
+    "spacing": 6,
+    "reload_style_on_change": true,
+
+    // Load Modules
+    "include": [
+        "~/.config/waybar/modules.json",
+        "~/.config/waybar/ddcutil/config.json",
+        "~/.config/waybar/checkUpdates/config.json",
+        "~/.config/waybar/syncthing/config.json",
+    ],    
+    "modules-left": [
+        "custom/appmenu",
+        "hyprland/workspaces",
+        "hyprland/window"
+    ],
+    "modules-center": [
+    ],
+    "modules-right": [
+        "hyprland/language",
+        "tray",
+        "custom/syncthing",
+        "pulseaudio", 
+        "custom/ddcutil",
+        "network", 
+        "custom/updates",
+        "clock", 
+    ]
+}

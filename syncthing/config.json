@@ -1,0 +1,15 @@
+{
+  "custom/syncthing": {
+    "exec": "node ~/.config/waybar/syncthing/index.mjs",
+    "interval": 900,
+    "format": " {icon} ",
+    "format-icons": {
+      "success": "",
+      "error": "󰧠"
+    },
+    "tooltip": true,
+    "tooltip-format": "{}",
+    "return-type": "json",
+    "on-click": "xdg-open http://localhost:8384/"
+  }
+}

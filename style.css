@@ -1,0 +1,81 @@
+* {
+  /* `otf-font-awesome` is required to be installed for icons */
+  font-family: "NotoSans Nerd Font";
+  font-size: 18px;
+}
+
+window#waybar {
+  background: alpha(#2e3440, 0.85);
+  border-radius: 8px;
+  padding: 8px 16px;
+  color: #eceff4;
+}
+
+window#waybar.solo {
+}
+
+#clock,
+#battery,
+#cpu,
+#memory,
+#disk,
+#temperature,
+#backlight,
+#network,
+#pulseaudio,
+#wireplumber,
+#custom-media,
+#tray,
+#mode,
+#idle_inhibitor,
+#scratchpad,
+#power-profiles-daemon,
+#mpd {
+  color: #eceff4;
+}
+
+#custom-appmenu {
+  color: #1692d0;
+  margin-left: 10px;
+  font-size: 20px;
+}
+
+#workspaces {
+  border-radius: 8px;
+  padding: 0px 6px;
+}
+
+#workspaces button {
+  background: transparent;
+  color: #d8dee9;
+  font-size: 4px;
+  margin: 0px -4px;
+  transition: all 0.2s ease;
+}
+
+#workspaces button.active {
+  color: #a3be8c;
+  font-size: 8px;
+}
+
+#custom-exit {
+  color: #bf616a;
+  border-radius: 8px;
+  padding: 4px 10px;
+}
+
+#clock {
+  padding: 0px 10px 0px 0px;
+}
+
+#tray {
+}
+
+#window {
+}
+
+#tray telegram {
+  color: #666; /* Серый цвет */
+  background-color: transparent;
+  opacity: 0.8;
+}
