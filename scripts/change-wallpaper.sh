@@ -18,5 +18,5 @@ fi
 
 WALLPAPER="${IMAGES[RANDOM % ${#IMAGES[@]}]}"
 
-hyprctl hyprpaper wallpaper "HDMI-A-1,$WALLPAPER,cover"
+hyprctl hyprpaper wallpaper "HDMI-A-2,$WALLPAPER,cover"
 cp "$WALLPAPER" $HOME/Wallpapers/lockScreen.png
