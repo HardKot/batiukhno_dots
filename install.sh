@@ -1,58 +1,91 @@
-pacman -S --noconfirm base-devel
+#!/bin/bash
 
-echo "Install Tools"
-pacman -S --no confirm \
-  nvim \
-  kitty \
+# Цвета для вывода
+GREEN='\033[0;32m'
+BLUE='\033[0;34m'
+RED='\033[0;31m'
+NC='\033[0m' # No Color
 
-ln -s nvim ${HOME}/.config/nvim
-ln -s kitty ${HOME}/.config/kitty
+echo -e "${BLUE}=== Глобальная настройка системы ===${NC}"
 
-echo "Copy wallpaper"
-ln -s wallpaper ${HOME}/wallpaper
+# 1. Проверка окружения
+if ! command -v pacman &> /dev/null; then
+    echo -e "${RED}Ошибка: Этот скрипт предназначен для Arch Linux (pacman не найден).${NC}"
+    exit 1
+fi
 
-echo "Install WM"
-pacman -S --noconfirm \
-  hyprland \
-  hyprpicker \
-  hyprpaper \
-  waybar \
-  rofi-wayland \
+# 2. Базовая конфигурация папок
+echo -e "${BLUE}Создание структуры папок...${NC}"
+chmod +x configurate.sh
+./configurate.sh
 
-ln -s hypr ${HOME}/.config/hypr
-ln -s waybar ${HOME}/.config/waybar
+# 3. Установка приложений через application.sh
+echo -e "${BLUE}Установка приложений...${NC}"
+chmod +x application.sh
+sudo ./application.sh
 
-echo "Install system utils"
-pacman -S --noconfirm \
-  ddccontrol \
-  rocm-core \
-  jdtls \
-  tar \
-  curl
+# 4. Распаковка обоев
+if [ -f "Wallpapers.7z" ]; then
+    echo -e "${BLUE}Распаковка обоев...${NC}"
+    7z x Wallpapers.7z -o"$HOME/Wallpapers" -y
+fi
 
-echo "Install other soft"
-pacman -S --noconfirm \
-  telegram-desktop \
-  firefox \
-  keepassxc \
-  syncthing 
+# 5. Шрифты
+echo -e "${BLUE}Установка шрифтов...${NC}"
+FONT_DIR="$HOME/.local/share/fonts"
+mkdir -p "$FONT_DIR"
 
+install_font() {
+    local name=$1
+    local url=$2
+    echo "Загрузка $name..."
+    curl -L -o "$name.tar.xz" "$url"
+    mkdir -p "$name"
+    tar -xJf "$name.tar.xz" -C "$name"
+    find "$name" -name "*NerdFont*" -exec mv {} "$FONT_DIR/" \;
+    rm -rf "$name" "$name.tar.xz"
+}
 
-echo "Install fonts"
-curl -L -o https://github.com/ryanoasis/nerd-fonts/releases/download/v3.3.0/JetBrainsMono.tar.xz
+if [ ! -d "$FONT_DIR/JetBrainsMono" ]; then
+    install_font "JetBrainsMono" "https://github.com/ryanoasis/nerd-fonts/releases/download/v3.3.0/JetBrainsMono.tar.xz"
+fi
 
-curl -L -o https://github.com/ryanoasis/nerd-fonts/releases/download/v3.3.0/Noto.tar.xz
+if [ ! -d "$FONT_DIR/Noto" ]; then
+    install_font "Noto" "https://github.com/ryanoasis/nerd-fonts/releases/download/v3.3.0/Noto.tar.xz"
+fi
 
-tar -xzvf JetBrainsMono.tar.xz
+fc-cache -fv
 
-tar -xzvf Noto.tar.xz
+# 6. Символические ссылки для конфигураций (Dotfiles)
+echo -e "${BLUE}Создание символических ссылок для конфигураций...${NC}"
+CONF_DIR="$HOME/.config"
+mkdir -p "$CONF_DIR"
 
-font_dir = ${HOME}/.local/share/fonts
+DOTS_SOURCE=$(pwd)
 
-mkdir "${font_dir}"
+link_config() {
+    local src=$1
+    local dest=$2
+    if [ -d "$src" ]; then
+        echo "Линковка $dest..."
+        rm -rf "$CONF_DIR/$dest"
+        ln -snf "$DOTS_SOURCE/$src" "$CONF_DIR/$dest"
+    else
+        echo -e "${RED}Предупреждение: Директория $src не найдена, пропуск.${NC}"
+    fi
+}
 
-mv JetBrainsMono/JetBrainsMonoNerdFontMono-* "${font_dir}"
-mv Noto/NotoSansNerdFontProto-* Noto/NotoSerifNerdFont-* "${font_dir}"
+link_config "nvim" "nvim"
+link_config "kitty" "kitty"
+link_config "hypr" "hypr"
+link_config "waybar" "waybar"
 
-rm -rf JetBrainsMono Noto 
-fc-cache -f -v
+# ZSH
+if [ -d "zsh" ] && [ -f "zsh/zshrc" ]; then
+    echo "Линковка .zshrc..."
+    ln -sf "$DOTS_SOURCE/zsh/zshrc" "$HOME/.zshrc"
+fi
+
+echo -e "${GREEN}=== Настройка завершена! ===${NC}"
+echo -e "${BLUE}Пожалуйста, перезагрузите систему или перезапустите сессию.${NC}"
+
