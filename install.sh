@@ -83,32 +83,10 @@ clone_config "kitty" "kitty"
 clone_config "hyperland" "hypr"
 clone_config "waybar" "waybar"
 
-# ZSH отдельно, так как он не в .config
-ZSH_PATH="$HOME/.dotfiles-zsh"
-if [ ! -d "$ZSH_PATH" ]; then
-    echo "Клонирование ZSH конфигурации..."
-    git clone -b "zsh" --depth 1 "$REPO_URL" "$ZSH_PATH"
-fi
-
-# Oh My Zsh и тема
-if [ ! -d "$HOME/.oh-my-zsh" ]; then
-    echo "Установка Oh My Zsh..."
-    sh -c "$(curl -fsSL https://raw.githubusercontent.com/ohmyzsh/ohmyzsh/master/tools/install.sh)" "" --unattended
-fi
-
-P10K_DIR="${ZSH_CUSTOM:-$HOME/.oh-my-zsh/custom}/themes/powerlevel10k"
-if [ ! -d "$P10K_DIR" ]; then
-    echo "Установка темы Powerlevel10k..."
-    git clone --depth=1 https://github.com/romkatv/powerlevel10k.git "$P10K_DIR"
-fi
-
-echo "Настройка .zshrc..."
-ln -sf "$ZSH_PATH/zshrc" "$HOME/.zshrc"
-
-if [ "$SHELL" != "$(which zsh)" ]; then
-    echo "Смена оболочки на ZSH..."
-    sudo chsh -s "$(which zsh)" "$USER"
-fi
+# ZSH и Oh My Zsh
+echo -e "${BLUE}Запуск настройки ZSH...${NC}"
+chmod +x zsh_config.sh
+./zsh_config.sh
 
 echo -e "${GREEN}=== Настройка завершена! ===${NC}"
 
