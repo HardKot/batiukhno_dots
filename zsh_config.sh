@@ -40,7 +40,11 @@ if [ ! -d "$PLUGINS_DIR/zsh-syntax-highlighting" ]; then
     git clone https://github.com/zsh-users/zsh-syntax-highlighting.git "$PLUGINS_DIR/zsh-syntax-highlighting"
 fi
 
-# 4. Копирование конфига
+# 4. Установка дополнительных системных плагинов через pacman
+echo "Установка системных зависимостей для плагинов (nvm, docker)..."
+sudo pacman -S --noconfirm nvm docker
+
+# 5. Копирование конфига
 if [ -f "zsh/zshrc" ]; then
     echo "Копирование .zshrc..."
     cp zsh/zshrc "$HOME/.zshrc"
