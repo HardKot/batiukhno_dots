@@ -1,0 +1,36 @@
+{
+  "pacman": [
+    "base-devel",
+    "git",
+    "flatpak",
+    "make",
+    "curl",
+    "nvim",
+    "nnn",
+    "cmus",
+    "kitty",
+    "tar",
+    "p7zip",
+    "htop",
+    "zsh",
+    "rsync",
+    "uwsm",
+    "hyprland",
+    "hyprpicker",
+    "hyprpaper",
+    "waybar",
+    "rofi-wayland",
+    "telegram-desktop",
+    "keepassxc",
+    "syncthing",
+    "obsidian",
+    "openvpn",
+    "ddccontrol",
+    "rocm-core",
+    "jdtls"
+  ],
+  "yay": [
+    "zen-browser-bin",
+    "visual-studio-code-bin"
+  ]
+}
