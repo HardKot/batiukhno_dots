@@ -8,10 +8,10 @@
 
     // Load Modules
     "include": [
-        "~/.config/waybar/modules.json",
-        "~/.config/waybar/ddcutil/config.json",
-        "~/.config/waybar/checkUpdates/config.json",
-        "~/.config/waybar/syncthing/config.json",
+        "./modules.json",
+        "./ddcutil/config.json",
+        "./checkUpdates.json",
+        "./syncthing/config.json"
     ],    
     "modules-left": [
         "custom/appmenu",

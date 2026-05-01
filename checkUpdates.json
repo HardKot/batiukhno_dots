@@ -1,7 +1,7 @@
 {
   "custom/updates": {
-    "exec": "~/.config/waybar/checkUpdates/checkupdates.sh",
-    "on-click": "~/.config/waybar/checkUpdates/checkupdates.sh",
+    "exec": "$HOME/Scripts/commands/my-check-update --json",
+    "on-click": "$HOME/Scripts/commands/my-check-update --json",
     "interval": 900, 
     "return-type": "json",
     "format": " {icon} ",
