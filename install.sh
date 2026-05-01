@@ -56,57 +56,61 @@ fi
 
 fc-cache -fv
 
-# 6. Символические ссылки для конфигураций (Dotfiles)
-echo -e "${BLUE}Создание символических ссылок для конфигураций...${NC}"
+# 6. Установка конфигураций (Dotfiles) через клонирование веток
+echo -e "${BLUE}Установка конфигураций...${NC}"
 CONF_DIR="$HOME/.config"
 mkdir -p "$CONF_DIR"
+REPO_URL="https://github.com/HardKot/batiukhno_dots.git"
 
-DOTS_SOURCE=$(pwd)
-
-# ZSH и Oh My Zsh
-if [ -d "zsh" ] && [ -f "zsh/zshrc" ]; then
-    echo -e "${BLUE}Настройка ZSH и Oh My Zsh...${NC}"
-    
-    # Установка Oh My Zsh если не установлен
-    if [ ! -d "$HOME/.oh-my-zsh" ]; then
-        echo "Установка Oh My Zsh..."
-        sh -c "$(curl -fsSL https://raw.githubusercontent.com/ohmyzsh/ohmyzsh/master/tools/install.sh)" "" --unattended
-    fi
-    
-    # Установка плагинов/тем (Powerlevel10k судя по конфигу)
-    P10K_DIR="${ZSH_CUSTOM:-$HOME/.oh-my-zsh/custom}/themes/powerlevel10k"
-    if [ ! -d "$P10K_DIR" ]; then
-        echo "Установка темы Powerlevel10k..."
-        git clone --depth=1 https://github.com/romkatv/powerlevel10k.git "$P10K_DIR"
-    fi
-
-    echo "Линковка .zshrc..."
-    ln -sf "$DOTS_SOURCE/zsh/zshrc" "$HOME/.zshrc"
-    
-    # Смена дефолтного шелла
-    if [ "$SHELL" != "$(which zsh)" ]; then
-        echo "Смена оболочки на ZSH..."
-        sudo chsh -s "$(which zsh)" "$USER"
-    fi
-fi
-
-link_config() {
-    local src=$1
+clone_config() {
+    local branch=$1
     local dest=$2
-    if [ -d "$src" ]; then
-        echo "Линковка $dest..."
-        rm -rf "$CONF_DIR/$dest"
-        ln -snf "$DOTS_SOURCE/$src" "$CONF_DIR/$dest"
+    local target_path="$CONF_DIR/$dest"
+
+    if [ -d "$target_path" ]; then
+        echo "Обновление $dest из ветки $branch..."
+        cd "$target_path" && git pull origin "$branch" && cd - > /dev/null
     else
-        echo -e "${RED}Предупреждение: Директория $src не найдена, пропуск.${NC}"
+        echo "Клонирование $dest из ветки $branch..."
+        git clone -b "$branch" --depth 1 "$REPO_URL" "$target_path"
+        # Удаляем лишние файлы, если они есть в ветке (скрипты, JSON и т.д.)
+        find "$target_path" -maxdepth 1 -type f \( -name "*.sh" -o -name "*.json" -o -name "*.7z" \) -delete
     fi
 }
 
-link_config "nvim" "nvim"
-link_config "kitty" "kitty"
-link_config "hypr" "hypr"
-link_config "waybar" "waybar"
+clone_config "nvim" "nvim"
+clone_config "kitty" "kitty"
+clone_config "hyperland" "hypr"
+clone_config "waybar" "waybar"
+
+# ZSH отдельно, так как он не в .config
+ZSH_PATH="$HOME/.dotfiles-zsh"
+if [ ! -d "$ZSH_PATH" ]; then
+    echo "Клонирование ZSH конфигурации..."
+    git clone -b "zsh" --depth 1 "$REPO_URL" "$ZSH_PATH"
+fi
+
+# Oh My Zsh и тема
+if [ ! -d "$HOME/.oh-my-zsh" ]; then
+    echo "Установка Oh My Zsh..."
+    sh -c "$(curl -fsSL https://raw.githubusercontent.com/ohmyzsh/ohmyzsh/master/tools/install.sh)" "" --unattended
+fi
+
+P10K_DIR="${ZSH_CUSTOM:-$HOME/.oh-my-zsh/custom}/themes/powerlevel10k"
+if [ ! -d "$P10K_DIR" ]; then
+    echo "Установка темы Powerlevel10k..."
+    git clone --depth=1 https://github.com/romkatv/powerlevel10k.git "$P10K_DIR"
+fi
+
+echo "Настройка .zshrc..."
+ln -sf "$ZSH_PATH/zshrc" "$HOME/.zshrc"
+
+if [ "$SHELL" != "$(which zsh)" ]; then
+    echo "Смена оболочки на ZSH..."
+    sudo chsh -s "$(which zsh)" "$USER"
+fi
 
 echo -e "${GREEN}=== Настройка завершена! ===${NC}"
+
 echo -e "${BLUE}Пожалуйста, перезагрузите систему или перезапустите сессию.${NC}"
 
