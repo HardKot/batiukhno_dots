@@ -48,9 +48,8 @@ copy_branch_files "origin/kitty" "kitty"
 # 4. Waybar (из ветки waybar)
 copy_branch_files "origin/waybar" "waybar"
 
-# 5. ZSH (если есть в какой-то ветке, добавим проверку)
-# Если вы решите создать под него ветку zsh, добавьте сюда:
-# copy_branch_files "origin/zsh" "zsh"
+# 5. ZSH (из ветки zsh)
+copy_branch_files "zsh" "zsh"
 
 # 6. Обои, базовые скрипты и список пакетов из master
 echo "Копируем базовые скрипты и ресурсы из master..."

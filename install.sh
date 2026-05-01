@@ -63,6 +63,33 @@ mkdir -p "$CONF_DIR"
 
 DOTS_SOURCE=$(pwd)
 
+# ZSH и Oh My Zsh
+if [ -d "zsh" ] && [ -f "zsh/zshrc" ]; then
+    echo -e "${BLUE}Настройка ZSH и Oh My Zsh...${NC}"
+    
+    # Установка Oh My Zsh если не установлен
+    if [ ! -d "$HOME/.oh-my-zsh" ]; then
+        echo "Установка Oh My Zsh..."
+        sh -c "$(curl -fsSL https://raw.githubusercontent.com/ohmyzsh/ohmyzsh/master/tools/install.sh)" "" --unattended
+    fi
+    
+    # Установка плагинов/тем (Powerlevel10k судя по конфигу)
+    P10K_DIR="${ZSH_CUSTOM:-$HOME/.oh-my-zsh/custom}/themes/powerlevel10k"
+    if [ ! -d "$P10K_DIR" ]; then
+        echo "Установка темы Powerlevel10k..."
+        git clone --depth=1 https://github.com/romkatv/powerlevel10k.git "$P10K_DIR"
+    fi
+
+    echo "Линковка .zshrc..."
+    ln -sf "$DOTS_SOURCE/zsh/zshrc" "$HOME/.zshrc"
+    
+    # Смена дефолтного шелла
+    if [ "$SHELL" != "$(which zsh)" ]; then
+        echo "Смена оболочки на ZSH..."
+        sudo chsh -s "$(which zsh)" "$USER"
+    fi
+fi
+
 link_config() {
     local src=$1
     local dest=$2
@@ -79,12 +106,6 @@ link_config "nvim" "nvim"
 link_config "kitty" "kitty"
 link_config "hypr" "hypr"
 link_config "waybar" "waybar"
-
-# ZSH
-if [ -d "zsh" ] && [ -f "zsh/zshrc" ]; then
-    echo "Линковка .zshrc..."
-    ln -sf "$DOTS_SOURCE/zsh/zshrc" "$HOME/.zshrc"
-fi
 
 echo -e "${GREEN}=== Настройка завершена! ===${NC}"
 echo -e "${BLUE}Пожалуйста, перезагрузите систему или перезапустите сессию.${NC}"
