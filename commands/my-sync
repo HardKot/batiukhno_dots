@@ -37,7 +37,7 @@ fi
 LAST_SYNC_FILE="$HOME/.local/state/my-sync-last"
 TEMP_DIR="/tmp/my-sync"
 YANDEX_WEBDAV_URL="https://webdav.yandex.ru/sync"
-YANDEX_TOKEN_FILE="$HOME/Documents/Security/yandex-disk"
+YANDEX_TOKEN_FILE="$HOME/Documents/Security/yandex-disk.token"
 
 get_yandex_token() {
     if [[ -f "$YANDEX_TOKEN_FILE" ]]; then
