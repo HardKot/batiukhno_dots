@@ -1,0 +1,97 @@
+#!/usr/bin/env bash
+
+# File to store last brightness value
+STATE_FILE="/tmp/monitor-brightness-state"
+DEFAULT_BRIGHTNESS=75
+
+get_current_brightness() {
+    local output
+    if output=$(ddcutil -t getvcp 10 2>/dev/null); then
+        echo "$output" | cut -d ' ' -f 4
+    else
+        echo "0"
+    fi
+}
+
+set_brightness() {
+    local val=$1
+    if [[ $val -lt 0 ]]; then val=0; fi
+    if [[ $val -gt 100 ]]; then val=100; fi
+    ddcutil setvcp 10 "$val" >/dev/null 2>&1
+}
+
+ACTION="$1"
+SHIFT_ARG="$2"
+
+case "$ACTION" in
+    "current")
+        ;;
+
+    "dim")
+        current=$(get_current_brightness)
+        echo "$current" > "$STATE_FILE"
+        set_brightness 30
+        ;;
+
+    "resume")
+        if [[ -f "$STATE_FILE" ]]; then
+            last_val=$(cat "$STATE_FILE")
+            set_brightness "$last_val"
+        fi
+        ;;
+
+    "change")
+        type="$2" # add or sub
+        step=5
+        current=$(get_current_brightness)
+        if [[ "$type" == "add" ]]; then
+            new_val=$((current + step))
+        elif [[ "$type" == "sub" ]]; then
+            new_val=$((current - step))
+        else
+            echo "Error: Missing change type (add/sub)" >&2
+            exit 1
+        fi
+        set_brightness "$new_val"
+        ;;
+
+    "min")
+        set_brightness 0
+        ;;
+    "max")
+        set_brightness 100
+        ;;
+
+    "default")
+        set_brightness $DEFAULT_BRIGHTNESS
+        ;;
+
+    "set")
+        val="$2"
+        if [[ -n "$val" ]]; then
+            set_brightness "$val"
+        fi
+        ;;
+    *)
+        echo "Usage: $0 {current [--json]|dim|resume|change add/sub|set value|min|max|default}" >&2
+        exit 1
+        ;;
+esac
+
+# Output current brightness after any action
+current=$(get_current_brightness)
+
+# Determine if we should output JSON
+is_json=false
+if [[ "$1" == "--json" || "$2" == "--json" || "$3" == "--json" ]]; then
+    is_json=true
+fi
+
+text="Brightness: $current%"
+
+if [[ "$is_json" == "true" ]]; then
+    # Waybar needs specific fields sometimes, but "brightness" was in your config
+    echo "{\"brightness\": $current, \"percentage\": $current, \"text\": \"$text\"}"
+else
+    echo "$text"
+fi

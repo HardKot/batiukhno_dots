@@ -27,10 +27,14 @@
     "openvpn",
     "ddccontrol",
     "rocm-core",
-    "jdtls"
+    "jdtls",
+    "docker"
   ],
   "yay": [
     "zen-browser-bin",
     "visual-studio-code-bin"
+  ],
+  "bash": [
+    "curl -o- https://raw.githubusercontent.com/nvm-sh/nvm/v0.40.4/install.sh | bash"
   ]
 }

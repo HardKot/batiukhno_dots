@@ -1,0 +1,316 @@
+#!/usr/bin/env bash
+
+JSON_OUTPUT=false
+STREAM_OUTPUT=false
+COMMAND=""
+
+for arg in "$@"; do
+    case "$arg" in
+        --json) JSON_OUTPUT=true ;;
+        --stream) STREAM_OUTPUT=true ;;
+        status|sync|restore)
+            if [ -z "$COMMAND" ]; then
+                COMMAND="$arg"
+            fi
+            ;;
+    esac
+done
+
+if [ -z "$COMMAND" ]; then
+    if [ "$JSON_OUTPUT" = true ]; then
+        echo '{"text": "Argument error", "alt": "error"}'
+    else
+        echo "Использование: $0 {status|sync|restore} [--json] [--stream]"
+    fi
+    exit 1
+fi
+
+if [ "$STREAM_OUTPUT" = true ]; then
+    if [ "$JSON_OUTPUT" = true ]; then
+        echo '{"text": "Загрузка...", "alt": "is-loading"}'
+    else
+        echo "Выполнение: $COMMAND..."
+    fi
+fi
+
+. "$HOME/Scripts/commands/.my-deps"
+LAST_SYNC_FILE="$HOME/.local/state/my-sync-last"
+TEMP_DIR="/tmp/my-sync"
+YANDEX_WEBDAV_URL="https://webdav.yandex.ru/sync"
+YANDEX_TOKEN_FILE="$HOME/Documents/Security/yandex-disk"
+
+get_yandex_token() {
+    if [[ -f "$YANDEX_TOKEN_FILE" ]]; then
+        cat "$YANDEX_TOKEN_FILE"
+    else
+        echo ""
+    fi
+}
+
+show_status() {
+    local text_status="Неизвестно"
+    local alt_status="unknown"
+    local num_folders=0
+    local syncthing_status="ОСТАНОВЛЕН"
+    local output_human=""
+    local folders_json_array="[]"
+    
+    if [ "$JSON_OUTPUT" = false ]; then
+        echo -e "=== Текущее состояние синхронизации ==="
+        echo -e "\n[Syncthing]"
+    fi
+
+    if systemctl --user is-active --quiet syncthing; then
+        syncthing_status="ЗАПУЩЕН"
+        [ "$JSON_OUTPUT" = false ] && echo "Сервис Syncthing: ЗАПУЩЕН"
+        
+        # Получаем пути конфигурации Syncthing
+        SYNCTHING_CONFIG_DIR="$HOME/.local/state/syncthing"
+        [[ ! -f "$SYNCTHING_CONFIG_DIR/config.xml" ]] && SYNCTHING_CONFIG_DIR="$HOME/.config/syncthing"
+        
+        if [[ -f "$SYNCTHING_CONFIG_DIR/config.xml" ]]; then
+            SYNCTHING_API_KEY=$(grep -oP '(?<=<apikey>)[^<]+' "$SYNCTHING_CONFIG_DIR/config.xml" | head -n 1)
+            SYNCTHING_ADDR=$(awk -F'[<>]' '/gui/,/<\/gui>/ {if ($2 == "address") print $3}' "$SYNCTHING_CONFIG_DIR/config.xml" | head -n 1)
+            [[ -z "$SYNCTHING_ADDR" ]] && SYNCTHING_ADDR="127.0.0.1:8384"
+            
+            # Получаем список папок
+            FOLDERS_JSON=$(curl -s -H "X-API-Key: $SYNCTHING_API_KEY" "http://$SYNCTHING_ADDR/rest/system/config" 2>/dev/null)
+            
+            if command -v jq >/dev/null 2>&1 && [[ -n "$FOLDERS_JSON" ]]; then
+                [ "$JSON_OUTPUT" = false ] && echo "Настроенные директории:"
+                
+                # Создаем временный массив для JSON вывода папок
+                local temp_json_folders=""
+                local any_syncing=false
+                local any_error=false
+
+                while read -r folder; do
+                    f_id=$(echo "$folder" | jq -r '.id')
+                    f_label=$(echo "$folder" | jq -r '.label')
+                    f_path=$(echo "$folder" | jq -r '.path')
+                    
+                    STATUS_JSON=$(curl -s -H "X-API-Key: $SYNCTHING_API_KEY" "http://$SYNCTHING_ADDR/rest/db/status?folder=$f_id" 2>/dev/null)
+                    f_state=$(echo "$STATUS_JSON" | jq -r '.state' 2>/dev/null)
+                    
+                    [[ -z "$f_state" || "$f_state" == "null" ]] && f_state="неопределен"
+                    num_folders=$((num_folders + 1))
+                    
+                    if [[ "$f_state" == "idle" ]]; then
+                        any_syncing=false
+                    elif [[ "$f_state" == "syncing" ]]; then
+                        any_syncing=true
+                    else
+                        any_error=true
+                    fi
+                    
+                    [ "$JSON_OUTPUT" = false ] && echo -e " - ${f_label} (${f_path}): ${f_state}"
+                    
+                    # Собираем JSON для текущей папки
+                    local current_folder_json="{\"label\":\"$f_label\",\"path\":\"$f_path\",\"state\":\"$f_state\"}"
+                    if [ -z "$temp_json_folders" ]; then
+                        temp_json_folders="$current_folder_json"
+                    else
+                        temp_json_folders="$temp_json_folders,$current_folder_json"
+                    fi
+                done < <(echo "$FOLDERS_JSON" | jq -c '.folders[]? | {id, label, path}' 2>/dev/null)
+                
+                folders_json_array="[$temp_json_folders]"
+                
+                if [ "$any_error" = true ]; then
+                    text_status="Ошибка синхр."
+                    alt_status="error"
+                elif [ "$any_syncing" = true ]; then
+                    text_status="Синхронизация..."
+                    alt_status="syncing"
+                else
+                    text_status="Синхронизировано"
+                    alt_status="idle"
+                fi
+            else
+                [ "$JSON_OUTPUT" = false ] && echo -e "Не удалось получить список папок (нужен jq)."
+            fi
+        else
+            [ "$JSON_OUTPUT" = false ] && echo -e "Не найден config.xml для Syncthing."
+        fi
+    else
+        [ "$JSON_OUTPUT" = false ] && echo "Сервис Syncthing: ОСТАНОВЛЕН"
+        text_status="Остановлен"
+        alt_status="stopped"
+    fi
+
+    # Директории из Yandex конфигурации
+    local yandex_dirs_json="[]"
+    if [ "$JSON_OUTPUT" = false ]; then
+        echo -e "\n[Yandex Disk] Директории для бэкапа (yandex_dirs):"
+        if [[ ${#yandex_dirs[@]} -gt 0 ]]; then
+            for dir in "${yandex_dirs[@]}"; do
+                echo " - $dir"
+            done
+        else
+            echo "Директории не заданы"
+        fi
+    else
+        if [[ ${#yandex_dirs[@]} -gt 0 ]]; then
+            yandex_dirs_json=$(printf '%s\n' "${yandex_dirs[@]}" | jq -R . | jq -s .)
+        fi
+    fi
+
+    local last_sync="Никогда"
+    if [[ -f "$LAST_SYNC_FILE" ]]; then
+        last_sync=$(cat "$LAST_SYNC_FILE")
+    fi
+    
+    if [ "$JSON_OUTPUT" = false ]; then
+        echo -e "\n[Последняя синхронизация с Yandex Disk]"
+        echo "$last_sync"
+        echo ""
+    else
+        cat <<EOF
+{"text": "$text_status", "alt": "$alt_status", "syncthing_status": "$syncthing_status", "folders": $folders_json_array, "yandex_backup_dirs": $yandex_dirs_json, "yandex_last_sync": "$last_sync"}
+EOF
+    fi
+}
+
+get_curl_auth_args() {
+    local token="$1"
+    if [[ "$token" == *":"* ]]; then
+        # Если есть двоеточие, используем Basic Auth (логин:пароль)
+        echo "-u $token"
+    else
+        # Иначе считаем это OAuth токеном
+        echo "-H \"Authorization: OAuth $token\""
+    fi
+}
+
+do_sync() {
+    echo -e "=== Запуск синхронизации ==="
+    
+    if [[ ${#yandex_dirs[@]} -eq 0 ]]; then
+        echo -e "Ошибка: Массив yandex_dirs пуст или не определен!"
+        exit 1
+    fi
+
+    YANDEX_TOKEN=$(get_yandex_token)
+    if [[ -z "$YANDEX_TOKEN" ]]; then
+        echo -e "Ошибка: Токен Яндекс.Диска не найден в $YANDEX_TOKEN_FILE"
+        echo "Создайте файл и поместите туда ваш OAuth токен или логин:пароль_приложения."
+        exit 1
+    fi
+
+    AUTH_ARGS=$(get_curl_auth_args "$YANDEX_TOKEN")
+
+    # Создание директории sync в Яндексе, если ее нет
+    eval curl -s -X MKCOL $AUTH_ARGS "$YANDEX_WEBDAV_URL" > /dev/null
+
+    mkdir -p "$TEMP_DIR"
+    TIMESTAMP=$(date +%Y%m%d_%H%M%S)
+    ARCHIVE_NAME="backup_$TIMESTAMP.7z"
+    ARCHIVE_PATH="$TEMP_DIR/$ARCHIVE_NAME"
+
+    echo "Создание архива $ARCHIVE_NAME..."
+    
+    # Чтение файлов и папок из массива yandex_dirs и добавление их в 7z архив
+    # Используем eval ls чтобы раскрыть переменные окружения и ~
+    for dir in "${yandex_dirs[@]}"; do
+        REAL_PATH=$(eval echo "$dir")
+        if [[ -e "$REAL_PATH" ]]; then
+            echo "Добавление $REAL_PATH..."
+            # -spf позволяет сохранять абсолютные пути
+            7z a -spf "$ARCHIVE_PATH" "$REAL_PATH" > /dev/null
+        else
+            echo -e "Предупреждение: $REAL_PATH не существует, пропускаем"
+        fi
+    done
+
+    if [[ ! -f "$ARCHIVE_PATH" ]]; then
+        echo -e "Ошибка: Не удалось создать архив, возможно нет файлов для архивации."
+        exit 1
+    fi
+
+    echo "Загрузка $ARCHIVE_NAME на Yandex Disk ($YANDEX_WEBDAV_URL/)..."
+    UPLOAD_STATUS=$(eval curl -s -w "%{http_code}" -X PUT -T "$ARCHIVE_PATH" $AUTH_ARGS "$YANDEX_WEBDAV_URL/$ARCHIVE_NAME" -o /dev/null)
+
+    if [[ "$UPLOAD_STATUS" == "201" || "$UPLOAD_STATUS" == "204" ]]; then
+        echo -e "Успешно загружено!"
+        date +"%Y-%m-%d %H:%M:%S" > "$LAST_SYNC_FILE"
+    else
+        echo -e "Ошибка загрузки. HTTP код: $UPLOAD_STATUS"
+        rm -f "$ARCHIVE_PATH"
+        exit 1
+    fi
+
+    rm -f "$ARCHIVE_PATH"
+    echo -e "Синхронизация завершена."
+}
+
+do_restore() {
+    echo -e "=== Восстановление с Yandex Disk ==="
+    
+    YANDEX_TOKEN=$(get_yandex_token)
+    if [[ -z "$YANDEX_TOKEN" ]]; then
+        echo -e "Ошибка: Токен Яндекс.Диска не найден в $YANDEX_TOKEN_FILE"
+        exit 1
+    fi
+
+    AUTH_ARGS=$(get_curl_auth_args "$YANDEX_TOKEN")
+
+    # Получаем последний архив через WebDAV PROPFIND
+    echo "Поиск последнего бэкапа на Yandex Disk..."
+    RESPONSE=$(eval curl -s -X PROPFIND $AUTH_ARGS -H "Depth: 1" "$YANDEX_WEBDAV_URL/")
+    
+    LATEST_ARCHIVE=$(echo "$RESPONSE" | grep -oPm1 "(?<=<d:href>/sync/)[^<]+\.7z" | tail -n 1)
+
+    if [[ -z "$LATEST_ARCHIVE" ]]; then
+        echo -e "Бэкапы не найдены в $YANDEX_WEBDAV_URL"
+        exit 1
+    fi
+
+    echo "Найден архив: $LATEST_ARCHIVE"
+    
+    mkdir -p "$TEMP_DIR"
+    DOWNLOAD_PATH="$TEMP_DIR/$LATEST_ARCHIVE"
+    
+    echo "Скачивание $LATEST_ARCHIVE..."
+    eval curl -# -X GET $AUTH_ARGS "$YANDEX_WEBDAV_URL/$LATEST_ARCHIVE" -o "$DOWNLOAD_PATH"
+
+    if [[ ! -f "$DOWNLOAD_PATH" ]]; then
+         echo -e "Ошибка: не удалось скачать архив."
+         exit 1
+    fi
+
+    echo "Распаковка..."
+    # Получаем список путей в архиве
+    7z l "$DOWNLOAD_PATH" | grep ' D\.\.\.\. ' | awk '{print $6}' | while read -r arc_dir; do
+        if [[ "$arc_dir" == /* || "$arc_dir" == ~* ]]; then
+            REAL_PATH=$(eval echo "$arc_dir")
+        else
+            REAL_PATH="/$arc_dir"
+        fi
+        
+        # Проверяем, пусто ли по этому пути
+        if [[ ! -d "$REAL_PATH" || -z "$(ls -A "$REAL_PATH" 2>/dev/null)" ]]; then
+           echo "Распаковка в пустой путь: $REAL_PATH"
+           # Извлекаем напрямую в корень, так как мы паковали абсолютные пути (spf)
+           7z x -spf -y "$DOWNLOAD_PATH" "$arc_dir" > /dev/null
+        else
+           echo -e "Директория $REAL_PATH не пуста, пропускаем извлечение"
+        fi
+    done
+
+    rm -f "$DOWNLOAD_PATH"
+    echo -e "Восстановление завершено."
+}
+
+case "$COMMAND" in
+    status)
+        show_status
+        ;;
+    sync)
+        do_sync
+        ;;
+    restore)
+        do_restore
+        ;;
+esac
+
+

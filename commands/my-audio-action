@@ -1,0 +1,137 @@
+#!/usr/bin/env bash
+
+# Скрипт для управления аудио (через wpctl и pactl)
+# Убедимся, что необходимые утилиты доступны
+for cmd in wpctl pactl awk grep; do
+    if ! command -v "$cmd" >/dev/null 2>&1; then
+        echo "Error: Required utility '$cmd' is not installed." >&2
+        exit 1
+    fi
+done
+
+get_volume() {
+    local output
+    output=$(wpctl get-volume @DEFAULT_AUDIO_SINK@)
+    local vol=$(echo "$output" | awk '{print $2 * 100}')
+    echo "${vol%.*}"
+}
+
+is_muted() {
+    wpctl get-volume @DEFAULT_AUDIO_SINK@ | grep -q "[MUTED]"
+}
+
+ACTION="$1"
+
+case "$ACTION" in
+    "current")
+        ;;
+
+    "mute-toggle")
+        wpctl set-mute @DEFAULT_AUDIO_SINK@ toggle
+        ;;
+
+    "mute")
+        wpctl set-mute @DEFAULT_AUDIO_SINK@ 1
+        ;;
+
+    "unmute")
+        wpctl set-mute @DEFAULT_AUDIO_SINK@ 0
+        ;;
+
+    "change")
+        type="$2" # add or sub
+        step="5%"
+        if [[ "$type" == "add" ]]; then
+            wpctl set-volume -l 1.5 @DEFAULT_AUDIO_SINK@ "$step"+
+        elif [[ "$type" == "sub" ]]; then
+            wpctl set-volume @DEFAULT_AUDIO_SINK@ "$step"-
+        else
+            echo "Error: Missing change type (add/sub)" >&2
+            exit 1
+        fi
+        ;;
+
+    "set")
+        val="$2"
+        if [[ -n "$val" ]]; then
+            # Переводим проценты в формат 0.XX для wpctl через awk (т.к. bc может отсутствовать)
+            target=$(awk "BEGIN {print $val / 100}")
+            wpctl set-volume @DEFAULT_AUDIO_SINK@ "$target"
+        fi
+        ;;
+
+    "list-sinks")
+        current_name=$(pactl get-default-sink)
+        pactl list sinks short | awk -v curr="$current_name" '{
+            status = ($2 == curr) ? "*" : " "
+            print status " ID: " $1 " \t Name: " $2 
+        }'
+        exit 0
+        ;;
+
+    "set-sink")
+        sink_id="$2"
+        if [[ -n "$sink_id" ]]; then
+            pactl set-default-sink "$sink_id"
+        fi
+        ;;
+
+    "next-sink")
+        # Получаем массив всех ID
+        sinks=($(pactl list sinks short | awk '{print $1}'))
+        current_name=$(pactl get-default-sink)
+        # Находим ID текущего устройства
+        current_id=$(pactl list sinks short | awk -v curr="$current_name" '$2 == curr {print $1}')
+        
+        if [[ ${#sinks[@]} -gt 1 ]]; then
+            for i in "${!sinks[@]}"; do
+                if [[ "${sinks[$i]}" == "$current_id" ]]; then
+                    next_idx=$(( (i + 1) % ${#sinks[@]} ))
+                    pactl set-default-sink "${sinks[$next_idx]}"
+                    break
+                fi
+            done
+        fi
+        ;;
+
+    *)
+        echo "Usage: $0 {current [--json]|mute-toggle|mute|unmute|change add/sub|set value|list-sinks|set-sink ID|next-sink}" >&2
+        exit 1
+        ;;
+esac
+
+current_vol=$(get_volume)
+if is_muted; then
+    muted="true"
+else
+    muted="false"
+fi
+
+is_json=false
+if [[ "$*" == *"--json"* ]]; then
+    is_json=true
+fi
+
+
+text="Volume: $current_vol%"
+[[ "$muted" == "true" ]] && text="Muted"
+
+if [[ "$is_json" == "true" ]]; then
+    echo "{\"volume\": $current_vol, \"muted\": $muted, \"text\": \"$text\", \"percentage\": $current_vol}"
+else
+    echo "$text"
+fi
+if [[ "$*" == *"--json"* ]]; then
+    is_json=true
+fi
+
+
+text="Volume: $current_vol%"
+[[ "$muted" == "true" ]] && text="Muted"
+
+if [[ "$is_json" == "true" ]]; then
+    echo "{\"volume\": $current_vol, \"muted\": $muted, \"text\": \"$text\", \"percentage\": $current_vol, \"sink\": \"$current_sink_name\", \"sinks\": [$all_sinks_json]}"
+else
+    echo "$text (Sink: $current_sink_name)"
+fi
+
