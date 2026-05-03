@@ -14,3 +14,12 @@ export MY_ZSH_PLUGINS=(
 export SSH_AUTH_SOCK="$XDG_RUNTIME_DIR/ssh-agent.socket"
 
 export PATH="$HOME/Scripts/commands:$PATH"
+
+alias rm=rmt
+alias cat=bat
+alias find=fd
+alias ls=lsd
+
+alias _rm=/bin/rm
+alias _cat=/bin/cat
+
