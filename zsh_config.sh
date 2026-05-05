@@ -17,22 +17,38 @@ else
     echo "Powerlevel10k уже установлен."
 fi
 
-CONFIG_CONNECT = "[[ ! -f $HOME/Scripts/zsh.sh ]] || source $HOME/Scripts/zsh.sh"
-if grep -q CONFIG_CONNECT $HOME/.zshrc; then 
+CONFIG_CONNECT = '[[ ! -f \$HOME/Scripts/zsh/config.sh ]] || source $HOME/Scripts/zsh/config.sh'
+PLUGINS_CONNECT = 'for plugin in $MY_ZSH_PLUGINS; do plugins+=($plugin); done'
+ALIAS_CONNECT = '[[ ! -f $HOME/Scripts/zsh/alias.sh ]] || source $HOME/Scripts/zsh/alias.sh'
+VARIABLES_CONNECT = '[[ ! -f $HOME/Scripts/zsh/variables.sh ]] || source $HOME/Scripts/zsh/variables.sh'
+
+if grep -q $CONFIG_CONNECT $HOME/.zshrc; then 
   echo "Конфигурация ZSH уже установленна."
 else 
   echo "Установка конфигурации ZSH..."
-  set sed -i '3i [[ ! -f $HOME/Scripts/zsh.sh ]] || source $HOME/Scripts/zsh.sh' $HOME/.zshrc
+  set sed -i "3i $CONFIG_CONNECT" $HOME/.zshrc
 fi
 
-PLUGINS_INSTALL = "for plugin in $MY_ZSH_PLUGINS; do plugins+=($plugin); done"
-
-if grep -q PLUGINS_INSTALL $HOME/.zshrc; then
+if grep -q $PLUGINS_CONNECT $HOME/.zshrc; then
     echo "Плагины уже подключены."
 else 
     echo "Подключаю плагины"
-    sed -i '/^source \$ZSH\/oh-my-zsh\.sh$/i\
-    for plugin in $MY_ZSH_PLUGINS; do plugins+=($plugin); done' $HOME/.zshrc
+    sed -i "/^source \$ZSH\/oh-my-zsh\.sh$/i\
+    $PLUGINS_CONNECT" $HOME/.zshrc
+fi
+
+if grep -q $ALIAS_CONNECT $HOME/.zshrc; then
+    echo "Alias уже подключены."
+else 
+    echo "Подключаю alias"
+    echo -e "\n$ALIAS_CONNECT\n" >> $HOME/.zshrc
+fi
+
+if grep -q $VARIABLES_CONNECT $HOME/.zshrc; then
+    echo "Переменные уже подключены."
+else 
+    echo "Подключаю переменные"
+    echo -e "\n$VARIABLES_CONNECT\n" >> $HOME/.zshrc
 fi
 
 if [ "$SHELL" != "$(which zsh)" ]; then

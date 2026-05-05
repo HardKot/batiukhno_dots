@@ -1,0 +1,12 @@
+MY_ZSH_PLUGINS=(
+    git-auto-fetch 
+    git 
+    nvm 
+    npm
+    yarn
+    docker 
+    command-not-found 
+    safe-paste 
+    zsh-syntax-highlighting
+    gradle-completion
+)
