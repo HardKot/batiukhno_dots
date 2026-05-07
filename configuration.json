@@ -6,11 +6,9 @@
   },
   "users": {
     "main_user": "nikitab",
-    "shell": "/bin/zsh"
   },
   "modules": {
     "dotfiles": true,
-    "zsh": true,
     "themes": true
   },
   "services": {

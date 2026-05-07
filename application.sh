@@ -1,12 +1,12 @@
 echo "Обновление системы..."
 sudo pacman -Syu --noconfirm
 
-if ! command -v jq &> /dev/null; then
-    echo "Установка jq для парсинга packages.json..."
-    sudo pacman -S --noconfirm jq
+if ! command -v yq &> /dev/null; then
+    echo "Установка yq для парсинга config.yaml..."
+    sudo pacman -S --noconfirm yq
 fi
 
-PACKAGES_FILE="packages.json"
+PACKAGES_FILE="config.yaml"
 
 if [ ! -f "$PACKAGES_FILE" ]; then
     echo "Error: $PACKAGES_FILE не найден!"
@@ -14,7 +14,7 @@ if [ ! -f "$PACKAGES_FILE" ]; then
 fi
 
 echo "Установка пакетов pacman..."
-PACMAN_PKGS=$(jq -r '.pacman[]' "$PACKAGES_FILE" | tr '\n' ' ')
+PACMAN_PKGS=$(yq '.pacman[]' "$PACKAGES_FILE" | tr '\n' ' ')
 sudo pacman -S --noconfirm $PACMAN_PKGS
 
 # Install yay if not present
@@ -29,11 +29,11 @@ fi
 
 # Install yay packages
 echo "Установка AUR пакетов..."
-YAY_PKGS=$(jq -r '.yay[]' "$PACKAGES_FILE" | tr '\n' ' ')
+YAY_PKGS=$(yq '.yay[]' "$PACKAGES_FILE" | tr '\n' ' ')
 yay -S --noconfirm $YAY_PKGS
 
-echo "Выполнение bash команд из packages.json..."
-BASH_CMDS=$(jq -r '.bash[]' "$PACKAGES_FILE")
+echo "Выполнение bash команд из config.yaml..."
+BASH_CMDS=$(yq '.bash[]' "$PACKAGES_FILE")
 while IFS= read -r cmd; do
     echo "Выполнение: $cmd"
     eval "$cmd"

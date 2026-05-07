@@ -1,28 +1,29 @@
 #!/bin/bash
 
-echo -e "Установка конфигураций..."
+# Цвета для вывода
+GREEN='\033[0;32m'
+BLUE='\033[0;34m'
+NC='\033[0m'
+
+echo -e "${BLUE}Настройка dotfiles с помощью GNU Stow...${NC}"
+
+DOTFILES_DIR="$HOME/Scripts/dotfiles"
 CONF_DIR="$HOME/.config"
-mkdir -p "$CONF_DIR"
-REPO_URL="https://github.com/HardKot/batiukhno_dots.git"
 
-echo -e "Клонирование и обновление конфигураций..."
-clone_config() {
-    local branch=$1
-    local dest=$2
-    local target_path="$CONF_DIR/$dest"
+# Важно: Предварительно создаем каталоги, чтобы Stow создавал симлинки на уровене файлов, а не папок
+# Это особенно критично для systemd, чтобы системные папки (вроде .wants) не попадали в git 
+echo "Создание структуры необходимых директорий..."
+mkdir -p "$CONF_DIR/systemd/user"
 
-    if [ -d "$target_path" ]; then
-        echo "Обновление $dest из ветки $branch..."
-        cd "$target_path" && git pull origin "$branch" && cd - > /dev/null
-    else
-        echo "Клонирование $dest из ветки $branch..."
-        git clone -b "$branch" --depth 1 "$REPO_URL" "$target_path"
-        # Удаляем лишние файлы, если они есть в ветке (скрипты, JSON и т.д.)
-        find "$target_path" -maxdepth 1 -type f \( -name "*.sh" -o -name "*.json" -o -name "*.7z" \) -delete
-    fi
-}
+cd "$DOTFILES_DIR" || { echo "Ошибка: Директория с дотфайлами ($DOTFILES_DIR) не найдена!"; exit 1; }
 
-clone_config "nvim" "nvim"
-clone_config "kitty" "kitty"
-clone_config "hyperland" "hypr"
-clone_config "waybar" "waybar"
+echo -e "${BLUE}Применение конфигураций stow...${NC}"
+# Привязываем все пакеты из dotfiles через Stow в домашнюю директорию (-t ~)
+stow -t ~ nvim kitty hyprland waybar fish systemd
+
+echo -e "${BLUE}Перезагрузка пользовательских сервисов systemd...${NC}"
+systemctl --user daemon-reload
+# Включаем и запускаем наш таймер для обоев
+systemctl --user --quiet enable change-wallpaper.timer
+
+echo -e "${GREEN}Дотфайлы успешно настроены!${NC}"

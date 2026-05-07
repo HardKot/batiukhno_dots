@@ -27,7 +27,6 @@ echo -e "${BLUE}Настройка конфигураций...${NC}"
 chmod +x setup_dots.sh && ./setup_dots.sh
 
 echo -e "${BLUE}Настройка SHELL...${NC}"
-chmod +x zsh_config.sh && ./zsh_config.sh
 
 echo -e "${GREEN}=== Настройка завершена! ===${NC}"
 

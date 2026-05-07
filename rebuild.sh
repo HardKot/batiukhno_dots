@@ -2,19 +2,19 @@
 set -e
 
 CONFIG="configuration.json"
-PACKAGES="packages.json"
+PACKAGES="config.yaml"
 
-# Проверка наличия jq
-if ! command -v jq &> /dev/null; then
-    echo "❌ Для работы нужен 'jq'. Устанавливаю..."
-    sudo pacman -S --noconfirm jq
+# Проверка наличия yq
+if ! command -v yq &> /dev/null; then
+    echo "❌ Для работы нужен 'yq'. Устанавливаю..."
+    sudo pacman -S --noconfirm yq
 fi
 
 echo "🚀 Начинаем применение конфигурации системы..."
 
 # --- 1. СИСТЕМНЫЕ НАСТРОЙКИ ---
 echo "⚙️  Проверка базовых настроек системы..."
-HOSTNAME=$(jq -r '.system.hostname' "$CONFIG")
+HOSTNAME=$(yq -r '.system.hostname' "$CONFIG")
 CURRENT_HOSTNAME=$(cat /etc/hostname 2>/dev/null || echo "")
 
 if [[ "$CURRENT_HOSTNAME" != "$HOSTNAME" && "$HOSTNAME" != "null" ]]; then
@@ -22,7 +22,7 @@ if [[ "$CURRENT_HOSTNAME" != "$HOSTNAME" && "$HOSTNAME" != "null" ]]; then
     sudo hostnamectl set-hostname "$HOSTNAME"
 fi
 
-TIMEZONE=$(jq -r '.system.timezone' "$CONFIG")
+TIMEZONE=$(yq -r '.system.timezone' "$CONFIG")
 if [[ "$TIMEZONE" != "null" ]]; then
     CURRENT_TIMEZONE=$(timedatectl show -p Timezone --value 2>/dev/null)
     if [[ "$CURRENT_TIMEZONE" != "$TIMEZONE" ]]; then
@@ -35,7 +35,7 @@ fi
 echo "📦 Проверка и установка пакетов..."
 
 # Pacman
-readarray -t PACMAN_PKGS < <(jq -r '.pacman[]' "$PACKAGES")
+readarray -t PACMAN_PKGS < <(yq -r '.pacman[]' "$PACKAGES")
 if [[ ${#PACMAN_PKGS[@]} -gt 0 ]]; then
     INSTALLED_PACMAN=$(pacman -Qq)
     MISSING_PACMAN=()
@@ -54,7 +54,7 @@ if [[ ${#PACMAN_PKGS[@]} -gt 0 ]]; then
 fi
 
 # Yay (AUR)
-readarray -t YAY_PKGS < <(jq -r '.yay[]' "$PACKAGES")
+readarray -t YAY_PKGS < <(yq -r '.yay[]' "$PACKAGES")
 if [[ ${#YAY_PKGS[@]} -gt 0 ]]; then
     if ! command -v yay &> /dev/null; then
         echo "⚠️  yay не установлен. Установка yay..."
@@ -80,17 +80,17 @@ if [[ ${#YAY_PKGS[@]} -gt 0 ]]; then
 fi
 
 # Bash scripts
-readarray -t BASH_SCRIPTS < <(jq -r '.bash[]' "$PACKAGES")
+readarray -t BASH_SCRIPTS < <(yq -r '.bash[]' "$PACKAGES")
 if [[ ${#BASH_SCRIPTS[@]} -gt 0 ]]; then
     echo "📜 Внимание: bash-скрипты не идемпотентны. Выполнять повторно?"
     # Здесь можно добавить логику отслеживания (например, создавать файлы-маркеры)
-    # Пока просто выводим, так как они уже есть в вашем packages.json
+    # Пока просто выводим, так как они уже есть в вашем config.yaml
 fi
 
 # --- 3. ЗАПУСК МОДУЛЕЙ ---
 echo "🧩 Выполнение модулей настройки..."
 
-if [[ "$(jq -r '.modules.dotfiles' "$CONFIG")" == "true" ]]; then
+if [[ "$(yq -r '.modules.dotfiles' "$CONFIG")" == "true" ]]; then
     if [[ -f "./setup_dots.sh" ]]; then
         echo "➡️  Запуск setup_dots.sh"
         bash ./setup_dots.sh
@@ -99,15 +99,11 @@ if [[ "$(jq -r '.modules.dotfiles' "$CONFIG")" == "true" ]]; then
     fi
 fi
 
-if [[ "$(jq -r '.modules.zsh' "$CONFIG")" == "true" ]]; then
-    if [[ -f "./zsh_config.sh" ]]; then
-         echo "➡️  Запуск zsh_config.sh"
-         bash ./zsh_config.sh
     fi
     
     # Меняем shell пользователю
-    TARGET_SHELL=$(jq -r '.users.shell' "$CONFIG")
-    USERNAME=$(jq -r '.users.main_user' "$CONFIG")
+    TARGET_SHELL=$(yq -r '.users.shell' "$CONFIG")
+    USERNAME=$(yq -r '.users.main_user' "$CONFIG")
     CURRENT_SHELL=$(getent passwd "$USERNAME" | cut -d: -f7)
     
     if [[ "$CURRENT_SHELL" != "$TARGET_SHELL" && "$TARGET_SHELL" != "null" ]]; then
@@ -120,7 +116,7 @@ fi
 echo "⚙️  Проверка служб Systemd..."
 
 # Системные
-readarray -t SYS_SERVICES < <(jq -r '.services.system.enable[]' "$CONFIG")
+readarray -t SYS_SERVICES < <(yq -r '.services.system.enable[]' "$CONFIG")
 for svc in "${SYS_SERVICES[@]}"; do
     if ! systemctl is-enabled --quiet "$svc" 2>/dev/null; then
         echo "🔌 Включение ($svc)..."
@@ -129,7 +125,7 @@ for svc in "${SYS_SERVICES[@]}"; do
 done
 
 # Пользовательские
-readarray -t USER_SERVICES < <(jq -r '.services.user.enable[]' "$CONFIG")
+readarray -t USER_SERVICES < <(yq -r '.services.user.enable[]' "$CONFIG")
 for svc in "${USER_SERVICES[@]}"; do
     if ! systemctl --user is-enabled --quiet "$svc" 2>/dev/null; then
         echo "🔌 Включение пользовательской службы ($svc)..."
