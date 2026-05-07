@@ -1,10 +1,11 @@
 #!/bin/bash
 
-echo -e "${BLUE}Установка конфигураций...${NC}"
+echo -e "Установка конфигураций..."
 CONF_DIR="$HOME/.config"
 mkdir -p "$CONF_DIR"
 REPO_URL="https://github.com/HardKot/batiukhno_dots.git"
 
+echo -e "Клонирование и обновление конфигураций..."
 clone_config() {
     local branch=$1
     local dest=$2

@@ -1,0 +1,15 @@
+{
+  "custom/updates": {
+    "exec": "$HOME/Scripts/commands/my-check-update --json",
+    "on-click": "$HOME/Scripts/commands/my-check-update --json",
+    "interval": 900, 
+    "return-type": "json",
+    "format": " {icon} ",
+    "format-icons": {
+        "has-updates": "",
+        "updated": ""
+    },
+    "tooltip": true,
+    "tooltip-format": "{}"
+  }
+}

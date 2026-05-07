@@ -1,0 +1,30 @@
+{
+  "system": {
+    "hostname": "arch-workstation",
+    "timezone": "Europe/Moscow",
+    "locale": "en_US.UTF-8"
+  },
+  "users": {
+    "main_user": "nikitab",
+    "shell": "/bin/zsh"
+  },
+  "modules": {
+    "dotfiles": true,
+    "zsh": true,
+    "themes": true
+  },
+  "services": {
+    "system": {
+      "enable": [
+        "NetworkManager.service",
+        "bluetooth.service",
+        "docker.service"
+      ]
+    },
+    "user": {
+      "enable": [
+        "change-wallpaper.timer"
+      ]
+    }
+  }
+}

@@ -138,7 +138,7 @@ do_update() {
     sudo pacman -Syu --noconfirm
 
     echo "Обновление yay"
-    sudo yay -Syu --noconfirm
+    yay -Syu --noconfirm
 
     echo "Обновление flatpak"
     flatpak update --noninteractive
