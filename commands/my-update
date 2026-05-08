@@ -81,35 +81,38 @@ do_status() {
 
     # 4. Git updates
     if [ "$JSON_OUTPUT" = false ]; then
-        echo -e "\n4. Проверка обновлений Git-репозиториев:"
+        echo -e "\n4. Проверка обновлений репозитория конфигурации ($HOME/Scripts):"
     fi
 
     updates_git=0
     git_updates_list=""
-    for repo in "${git_repos[@]}"; do
-        cd "$repo" || continue
-
-        if [ ! -d ".git" ]; then
-            [ "$JSON_OUTPUT" = false ] && echo "Не является Git‑репозиторием: $repo"
-            continue
-        fi
-
+    
+    pushd "$HOME/Scripts" > /dev/null || true
+    
+    if [ -d ".git" ]; then
         current_branch=$(git rev-parse --abbrev-ref HEAD 2>/dev/null)
         git fetch --quiet origin "$current_branch" 2>/dev/null
         behind_commits=$(git rev-list --count HEAD..origin/"$current_branch" 2>/dev/null)
 
         if [ "$behind_commits" -gt 0 ]; then
-            updates_git=$((updates_git + 1))
-            repo_name=$(basename "$repo")
-            git_updates_list+="${repo_name} (${behind_commits} commits behind) "
+            updates_git=$behind_commits
+            repo_name=$(basename "$PWD")
+            git_updates_list="${repo_name} (${behind_commits} commits behind)"
         fi
-    done
+    else
+        [ "$JSON_OUTPUT" = false ] && echo "Директория $HOME/Scripts не является Git-репозиторием"
+    fi
+    
+    popd > /dev/null || true
 
     total_updates=$((updates_pacman + updates_yay + updates_flatpak + updates_git))
 
+    dotfiles_status="noupdates"
+    if [ "$updates_git" -gt 0 ]; then dotfiles_status="updates"; fi
+
     if [ "$JSON_OUTPUT" = true ]; then
         # Generate JSON
-        text_report="Pacman: $updates_pacman, AUR: $updates_yay, Flatpak: $updates_flatpak, Git: $updates_git"
+        text_report="Pacman: $updates_pacman, AUR: $updates_yay, Flatpak: $updates_flatpak, dotfiles: $dotfiles_status"
         alt_status="updated"
         if [ $total_updates -gt 0 ]; then alt_status="has-updates"; fi
 
@@ -143,18 +146,14 @@ do_update() {
     echo "Обновление flatpak"
     flatpak update --noninteractive
 
-    echo "Обновление конфигураций"
-    for repo in "${git_repos[@]}"; do
-        cd "$repo" || continue
+    pushd "$HOME/Scripts" > /dev/null || true
+    if [ -d ".git" ]; then
+        echo "Обновление репозитория конфигурации ($HOME/Scripts)"
+        current_branch=$(git rev-parse --abbrev-ref HEAD 2>/dev/null)
+        git pull origin "$current_branch"
+    fi
+    popd > /dev/null || true
 
-        if [ ! -d ".git" ]; then
-            echo "Не является Git‑репозиторием: $repo"
-            continue
-        fi
-        
-        git fetch && git pull 
-    done
-    
     if [ "$JSON_OUTPUT" = true ]; then
         echo '{"text": "Обновление завершено","alt": "updated"}'
     else

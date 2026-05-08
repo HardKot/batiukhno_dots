@@ -13,4 +13,9 @@ mkdir -p ~/Scripts
 mkdir -p ~/Downloads
 mkdir -p ~/Games
 
+echo "Создание корзины"
+
+mkdir -p ~/.local/share/Trash/files
+mkdir -p ~/.local/share/Trash/info
+
 echo "Структура папок создана."

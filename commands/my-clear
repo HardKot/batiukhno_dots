@@ -1,0 +1,127 @@
+#!/bin/bash
+
+# Цвета для вывода
+RED='\033[0;31m'
+GREEN='\033[0;32m'
+YELLOW='\033[0;33m'
+NC='\033[0m'
+
+# Флаги по умолчанию
+do_cache=0
+do_logs=0
+do_screenshots=0
+do_downloads=0
+skip_confirm=0
+
+# Если аргументов нет, включаем режим --all
+if [ "$#" -eq 0 ]; then
+    do_cache=1
+    do_logs=1
+    do_screenshots=1
+    do_downloads=1
+fi
+
+# Парсинг аргументов
+for arg in "$@"; do
+    case $arg in
+        --all)
+            do_cache=1
+            do_logs=1
+            do_screenshots=1
+            do_downloads=1
+            ;;
+        --cache)
+            do_cache=1
+            ;;
+        --logs)
+            do_logs=1
+            ;;
+        --screenshots)
+            do_screenshots=1
+            ;;
+        --downloads)
+            do_downloads=1
+            ;;
+        --no-confirm)
+            skip_confirm=1
+            ;;
+        -h|--help)
+            echo "Использование: my-clear [ОПЦИИ]"
+            echo "Опции:"
+            echo "  --all          Очистить всё (по умолчанию)"
+            echo "  --cache        Очистить кэш pacman/yay, npm/yarn/pnpm, docker, gradle, .jdks и миниатюры картинок"
+            echo "  --logs         Очистить системные логи journalctl (оставить за 7 дней)"
+            echo "  --screenshots  Удалить скриншоты старше 7 дней"
+            echo "  --downloads    Удалить файлы из Загрузок старше 7 дней"
+            echo "  --no-confirm   Пропустить вопрос с подтверждением"
+            exit 0
+            ;;
+        *)
+            echo -e "${RED}Неизвестный параметр: $arg${NC}"
+            echo "Используйте --help для справки."
+            exit 1
+            ;;
+    esac
+done
+
+# Вывод запланированных действий
+echo -e "${YELLOW}Будут выполнены следующие действия:${NC}"
+[ $do_cache -eq 1 ] && echo " - Очистка кэша программ (pacman, npm/yarn/pnpm, docker, gradle, .jdks, thumbnails)"
+[ $do_logs -eq 1 ] && echo " - Очистка старых системных логов"
+[ $do_screenshots -eq 1 ] && echo " - Удаление скриншотов старше 7 дней"
+[ $do_downloads -eq 1 ] && echo " - Удаление файлов из Загрузок старше 7 дней"
+echo ""
+
+# Подтверждение
+if [ $skip_confirm -eq 0 ]; then
+    read -p "Вы уверены, что хотите продолжить? [y/N] " -n 1 -r
+    echo
+    if [[ ! $REPLY =~ ^[Yy]$ ]]; then
+        echo -e "${RED}Отменено.${NC}"
+        exit 1
+    fi
+else
+    echo -e "${YELLOW}Пропуск подтверждения (--no-confirm)...${NC}"
+fi
+
+echo -e "\n${GREEN}Начинаем уборку...${NC}"
+
+if [ $do_cache -eq 1 ]; then
+    echo -e "${YELLOW}[1/4] Очистка кэшей...${NC}"
+    # Флаг --noconfirm чтобы yay не просил дополнительного подтверждения
+    yay -Sc --noconfirm
+    # Очистка NPM, YARN и PNPM (подавляем ошибки если не установлены)
+    npm cache clean --force 2>/dev/null || true
+    yarn cache clean 2>/dev/null || true
+    pnpm store prune 2>/dev/null || true
+    
+    # Очистка кэша Gradle и старых процессов демона
+    rm -rf ~/.gradle/caches/* ~/.gradle/daemon/* 2>/dev/null || true
+    
+    # Очистка Docker (неиспользуемые сети, висячие образы и остановленные контейнеры)
+    if command -v docker &> /dev/null && docker info &> /dev/null; then
+        docker system prune -f 2>/dev/null || true
+    fi
+
+    # Очистка миниатюр
+    rm -rf ~/.cache/thumbnails/*
+fi
+
+if [ $do_logs -eq 1 ]; then
+    echo -e "${YELLOW}[2/4] Очистка системных логов...${NC}"
+    sudo journalctl --vacuum-time=7d
+fi
+
+if [ $do_screenshots -eq 1 ]; then
+    echo -e "${YELLOW}[3/4] Очистка старых скриншотов...${NC}"
+    # Находит и удаляет файлы старше 7 дней (-mtime +7)
+    find ~/Screenshot -type f -mtime +7 -exec rm -f {} + 2>/dev/null || true
+fi
+
+if [ $do_downloads -eq 1 ]; then
+    echo -e "${YELLOW}[4/4] Очистка содержимого папки Загрузки...${NC}"
+    # Ограничиваем глубину (maxdepth 1), чтобы не удалять файлы внутри папок загрузок
+    find ~/Downloads -maxdepth 1 -type f -mtime +7 -exec rm -f {} + 2>/dev/null || true
+fi
+
+echo -e "${GREEN}Уборка успешно завершена! Система свободна от мусора.${NC}"

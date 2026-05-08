@@ -41,3 +41,4 @@ yay:
   - visual-studio-code-bin
 bash:
   - bash -c "$(curl -sLo- https://superfile.dev/install.sh)"
+  - curl -s "https://get.sdkman.io" | bash

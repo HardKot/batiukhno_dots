@@ -21,13 +21,12 @@
     "rewrite": {
       "(.*) — Mozilla Firefox": "󰈹 <b>$1</b>",
       "nvim (.*)": " <b>$1</b>",
-      "(.*) - zsh": " <b>$1</b>",
+      "(.*) - fish": " <b>$1</b>",
       "(.*)": "<b>$1</b>"
     },
     "separate-outputs": false
   },
 
-  // Rofi Application Launcher
   "custom/appmenu": {
     "format": "󰣇",
     "tooltip-format": "Left: Open the application launcher\nRight: Show all keybindings",
@@ -48,7 +47,7 @@
   },
 
   "clock": {
-    "format": "<b>󰥔 {:%R   %d %B}</b>",
+    "format": "󰥔 {:%R  %d %B}",
     "tooltip-format": "<tt><small>{calendar}</small></tt>",
     "calendar": {
       "mode": "month",
@@ -59,7 +58,7 @@
   },
   "pulseaudio": {
     "scroll-step": 5,
-    "format": " {icon} ",
+    "format": "{icon}",
     "tooltip": true,
     "tooltip-format": "{volume}% {desc}",
     "format-icons": {

@@ -1,11 +1,13 @@
 {
   "custom/updates": {
-    "exec": "$HOME/Scripts/commands/my-check-update --json",
-    "on-click": "$HOME/Scripts/commands/my-check-update --json",
-    "interval": 900, 
+    "exec": "$HOME/Scripts/commands/my-update status --json --stream",
+    "on-click": "pkill -RTMIN+8 waybar",
+    "restart-interval": 900, 
+    "signal": 8,
     "return-type": "json",
     "format": " {icon} ",
     "format-icons": {
+        "is-loading": "󱍷",
         "has-updates": "",
         "updated": ""
     },

@@ -1,0 +1,136 @@
+#!/usr/bin/env bash
+
+# Цвета для вывода
+RED='\033[0;31m'
+GREEN='\033[0;32m'
+YELLOW='\033[0;33m'
+NC='\033[0m'
+
+# Определяем устройство, на котором находится Btrfs корень (/)
+BTRFS_DEV=$(findmnt -n -o SOURCE / | sed 's/\[.*\]//')
+
+# Директории
+MNT_ROOT="/mnt/btrfs-root"
+MNT_SNAP="/mnt/btrfs-snapshot"
+
+if [ -z "$BTRFS_DEV" ]; then
+    echo -e "${RED}Не удалось определить устройство Btrfs для корня.${NC}"
+    exit 1
+fi
+
+setup_root_mount() {
+    sudo mkdir -p "$MNT_ROOT"
+    if ! mountpoint -q "$MNT_ROOT"; then
+        sudo mount -o subvolid=5 "$BTRFS_DEV" "$MNT_ROOT"
+    fi
+}
+
+cleanup_root_mount() {
+    if mountpoint -q "$MNT_ROOT"; then
+        sudo umount "$MNT_ROOT"
+    fi
+}
+
+cmd_create() {
+    local comments="${1:-Manual snapshot via my-backup script}"
+    echo -e "${YELLOW}Создание snapshot через timeshift...${NC}"
+    
+    sudo timeshift --create --comments "$comments"
+    
+    echo -e "${GREEN}Снапшот успешно создан через timeshift!${NC}"
+}
+
+cmd_list() {
+    echo -e "${YELLOW}Доступные снапшоты (timeshift):${NC}"
+    sudo timeshift --list
+}
+
+cmd_mount() {
+    local snap_name="$1"
+    if [ -z "$snap_name" ]; then
+        echo -e "${RED}Укажите имя снапшота для монтирования (например, 2026-05-08_12-52-43).${NC}"
+        echo "Используйте 'my-backup list' для просмотра доступных снапшотов."
+        exit 1
+    fi
+
+    # У timeshift снапшоты хранятся в timeshift-btrfs/snapshots/<дата>/@
+    local subvol_path="timeshift-btrfs/snapshots/$snap_name/@"
+
+    sudo mkdir -p "$MNT_SNAP"
+    # Отмонтируем, если что-то уже примонтировано
+    if mountpoint -q "$MNT_SNAP"; then
+        sudo umount "$MNT_SNAP" || { echo -e "${RED}Не удалось размонтировать текущий $MNT_SNAP${NC}"; exit 1; }
+    fi
+
+    echo -e "${YELLOW}Монтирование '$snap_name' в $MNT_SNAP...${NC}"
+    # Монтируем конкретный subvol
+    if sudo mount -o "subvol=$subvol_path",ro "$BTRFS_DEV" "$MNT_SNAP" 2>/dev/null; then
+        echo -e "${GREEN}Снапшот успешно примонтирован (только для чтения)!${NC}"
+        echo "Вы можете просмотреть его файлы здесь: $MNT_SNAP"
+    else
+        echo -e "${RED}Не удалось примонтировать снапшот. Проверьте правильность имени.${NC}"
+        exit 1
+    fi
+}
+
+cmd_umount() {
+    if mountpoint -q "$MNT_SNAP"; then
+        echo -e "${YELLOW}Размонтирование $MNT_SNAP...${NC}"
+        sudo umount "$MNT_SNAP"
+        echo -e "${GREEN}Успешно размонтировано.${NC}"
+    else
+        echo "Ничего не примонтировано в директории $MNT_SNAP."
+    fi
+}
+
+cmd_delete() {
+    local snap_name="$1"
+    if [ -z "$snap_name" ]; then
+        echo -e "${RED}Укажите имя снапшота для удаления.${NC}"
+        exit 1
+    fi
+
+    setup_root_mount
+    if [ -d "$MNT_ROOT/$snap_name" ]; then
+        echo -e "${YELLOW}Удаление снапшота '$snap_name'...${NC}"
+        sudo btrfs subvolume delete "$MNT_ROOT/$snap_name"
+        echo -e "${GREEN}Снапшот удален.${NC}"
+    else
+        echo -e "${RED}Снапшот '$snap_name' не найден.${NC}"
+    fi
+    cleanup_root_mount
+}
+
+case "$1" in
+    create)
+        cmd_create "$2"
+        ;;
+    list)
+        cmd_list
+        ;;
+    mount)
+        cmd_mount "$2"
+        ;;
+    umount)
+        cmd_umount
+        ;;
+    delete)
+        cmd_delete "$2"
+        ;;
+    *)
+        echo "Использование: my-backup [КОМАНДА]"
+        echo ""
+        echo "Команды:"
+        echo "  create [root|home]   Создать read-only снапшот (root по умолчанию)"
+        echo "  list                 Показать все доступные снапшоты"
+        echo "  mount <имя>          Примонтировать выбранный снапшот в $MNT_SNAP"
+        echo "  umount               Размонтировать $MNT_SNAP"
+        echo "  delete <имя>         Удалить выбранный снапшот навсегда"
+        echo ""
+        echo "Пример:"
+        echo "  my-backup create home"
+        echo "  my-backup list"
+        echo "  my-backup mount home_backup_2026-05-08_12-00-00"
+        exit 1
+        ;;
+esac

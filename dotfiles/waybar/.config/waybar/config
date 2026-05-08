@@ -28,6 +28,6 @@
         "custom/ddcutil",
         "network", 
         "custom/updates",
-        "clock", 
+        "clock"
     ]
 }
