@@ -1,0 +1,24 @@
+@theme "/home/nikitab/.config/rofi/themes/rounded-nord-dark.rasi"
+
+configuration {
+  kb-element-next: ""; 
+  kb-element-prev: "";
+
+  kb-mode-next: "Tab";
+
+  filebrowser {
+    directory: "$HOME";
+    sorting-method: "name";
+    directories-first: true;
+    show-hidden: false;
+  }
+
+
+  recursivebrowser {
+    directory: "$HOME";
+    sorting-method: "name";
+    directories-first: true;
+    show-hidden: false;
+    filter-regex: "(.*cache.*|.*\.0|node_modules|build)";
+  }
+}
