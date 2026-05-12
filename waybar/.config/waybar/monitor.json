@@ -1,0 +1,14 @@
+{
+  "custom/monitor": {
+    "format": " {icon} ",
+    "format-icons": ["󰃞", "󰃟", "󰃠"],
+    "exec": "~/.dotfiles/commands/my-monitor-current --json --stream",
+    "return-type": "json",
+    "on-scroll-up": "~/.dotfiles/commands/my-monitor +10 --json",
+    "on-scroll-down": "~/.dotfiles/commands/my-monitor -10 --json",
+    "on-click": "~/.dotfiles/commands/my-monitor min --json",
+    "on-click-right": "~/.dotfiles/commands/my-monitor max --json",
+    "tooltip": true,
+    "tooltip-format": "<b>{percentage}%</b>"
+  }
+}

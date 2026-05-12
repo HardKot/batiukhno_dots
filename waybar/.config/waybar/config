@@ -9,7 +9,7 @@
     // Load Modules
     "include": [
         "./modules.json",
-        "./ddcutil/config.json",
+        "./monitor.json",
         "./checkUpdates.json",
         "./syncthing/config.json"
     ],    
@@ -25,9 +25,9 @@
         "tray",
         "custom/syncthing",
         "pulseaudio", 
-        "custom/ddcutil",
+        "custom/monitor",
         "network", 
-        "custom/updates",
+        // "custom/updates",
         "clock"
     ]
 }

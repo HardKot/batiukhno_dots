@@ -4,7 +4,7 @@ Description=Change wallpaper with time
 [Service]
 Type=oneshot
 Environment="HOME=%h"
-ExecStart=%h/Scripts/commands/my-change-wallpaper
+ExecStart=%h/.dotfiles/commands/my-change-wallpaper
 
 [Install]
 WantedBy=default.target

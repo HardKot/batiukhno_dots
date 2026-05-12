@@ -7,7 +7,7 @@ NC='\033[0m'
 
 echo -e "${BLUE}Настройка dotfiles с помощью GNU Stow...${NC}"
 
-DOTFILES_DIR="$HOME/Scripts/dotfiles"
+DOTFILES_DIR="$HOME/.dotfiles"
 CONF_DIR="$HOME/.config"
 
 # Важно: Предварительно создаем каталоги, чтобы Stow создавал симлинки на уровене файлов, а не папок
@@ -19,7 +19,7 @@ cd "$DOTFILES_DIR" || { echo "Ошибка: Директория с дотфай
 
 echo -e "${BLUE}Применение конфигураций stow...${NC}"
 # Привязываем все пакеты из dotfiles через Stow в домашнюю директорию (-t ~)
-stow -t ~ nvim kitty hyprland waybar fish systemd
+stow -t ~ nvim kitty hyprland waybar fish systemd rofi
 
 echo -e "${BLUE}Перезагрузка пользовательских сервисов systemd...${NC}"
 systemctl --user daemon-reload

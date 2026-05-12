@@ -10,8 +10,8 @@ NC='\033[0m'
 BTRFS_DEV=$(findmnt -n -o SOURCE / | sed 's/\[.*\]//')
 
 # Директории
-MNT_ROOT="/mnt/btrfs-root"
-MNT_SNAP="/mnt/btrfs-snapshot"
+MNT_ROOT="/run/media/btrfs-root"
+MNT_SNAP="/run/media/btrfs-snapshot"
 
 if [ -z "$BTRFS_DEV" ]; then
     echo -e "${RED}Не удалось определить устройство Btrfs для корня.${NC}"

@@ -1,6 +1,6 @@
 #!/usr/bin/env bash
 
-WALLPAPER_DIR="$HOME/Wallpapers/"
+WALLPAPER_DIR="$HOME/Images/Wallpapers/"
 CURRENT_WALL=$(hyprctl hyprpaper listloaded)
 
 
@@ -19,4 +19,4 @@ fi
 WALLPAPER="${IMAGES[RANDOM % ${#IMAGES[@]}]}"
 
 hyprctl hyprpaper wallpaper "HDMI-A-2,$WALLPAPER,cover"
-cp "$WALLPAPER" $HOME/Wallpapers/lockScreen.png
+cp "$WALLPAPER" $HOME/Images/LockScreen.png

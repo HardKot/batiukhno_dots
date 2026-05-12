@@ -30,8 +30,6 @@
   "custom/appmenu": {
     "format": "󰣇",
     "tooltip-format": "Left: Open the application launcher\nRight: Show all keybindings",
-    "on-click": "rofi -show drun -replace",
-    "on-click-right": "~/.config/ml4w/scripts/keybindings.sh",
     "tooltip": false
   },
 
@@ -64,6 +62,6 @@
     "format-icons": {
       "default": ["", "", ""]
     },
-    "on-click": "~/.config/waybar/scripts/change-audio.sh"
+    "on-click": "~/.dotfiles/commands/my-audio-mute"
   }
 }
